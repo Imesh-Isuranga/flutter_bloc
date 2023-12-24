@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:myflutter_bloc/my_bloc.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:myflutter_bloc/blocks/bloc/counter_bloc.dart';
 
 void main() {
   runApp(const MyApp());
@@ -32,7 +33,10 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
+      home: BlocProvider(
+        create: (context) => CounterBloc(),
+        child: const MyHomePage(title: 'Flutter Demo Home Page'),
+      ),
     );
   }
 }
@@ -57,18 +61,17 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   int _counter = 0;
+  late CounterBloc counterBloc;
 
-  MyBloc mybloc = MyBloc();
+  //MyBloc mybloc = MyBloc();
 
-  void _incrementCounter() {
-    setState(() {
-      // This call to setState tells the Flutter framework that something has
-      // changed in this State, which causes it to rerun the build method below
-      // so that the display can reflect the updated values. If we changed
-      // _counter without calling setState(), then the build method would not be
-      // called again, and so nothing would appear to happen.
-      _counter++;
-    });
+  //should use provider
+  //CounterBloc counterBloc = CounterBloc();
+
+  @override
+  void initState() {
+    super.initState();
+    counterBloc = BlocProvider.of<CounterBloc>(context);
   }
 
   @override
@@ -111,7 +114,27 @@ class _MyHomePageState extends State<MyHomePage> {
             const Text(
               'You have pushed the button this many times:',
             ),
-            StreamBuilder<MyState>(
+            BlocBuilder<CounterBloc, CounterState>(
+              builder: (context, state) {
+                if (state is IncrementState) {
+                  _counter = state.value;
+                  return Text(
+                    'Incremented : ${state.value}',
+                    style: Theme.of(context).textTheme.headlineMedium,
+                  );
+                } else if (state is DecrementState) {
+                  _counter = state.value;
+                  return Text(
+                    'Decremented : ${state.value}',
+                    style: Theme.of(context).textTheme.headlineMedium,
+                  );
+                } else {
+                  return Container();
+                }
+              },
+            )
+            //Below code for when using stream method
+            /* StreamBuilder<MyState>(
                 stream: mybloc.stateStream,
                 builder: (context, snapshot) {
                   if (snapshot.hasData) {
@@ -120,13 +143,13 @@ class _MyHomePageState extends State<MyHomePage> {
                     if (state is IncrementState) {
                       _counter = state.value;
                       return Text(
-                        '${state.value}',
+                        'Incremented : ${state.value}',
                         style: Theme.of(context).textTheme.headlineMedium,
                       );
                     } else if (state is DecrementState) {
                       _counter = state.value;
                       return Text(
-                        '${state.value}',
+                        'Decremented : ${state.value}',
                         style: Theme.of(context).textTheme.headlineMedium,
                       );
                     } else {
@@ -135,7 +158,7 @@ class _MyHomePageState extends State<MyHomePage> {
                   } else {
                     return CircularProgressIndicator();
                   }
-                }),
+                }),*/
           ],
         ),
       ),
@@ -146,14 +169,16 @@ class _MyHomePageState extends State<MyHomePage> {
           children: [
             FloatingActionButton(
               onPressed: () {
-                mybloc.eventSink.add(IncrementEvent(value: _counter));
+                counterBloc.add(IncrementEvent(value: _counter));
+                //mybloc.eventSink.add(IncrementEvent(value: _counter));
               },
               tooltip: 'Increment',
               child: const Icon(Icons.add),
             ),
             FloatingActionButton(
               onPressed: () {
-                mybloc.eventSink.add(DecrementEvent(value: _counter));
+                counterBloc.add(DecrementEvent(value: _counter));
+                // mybloc.eventSink.add(DecrementEvent(value: _counter));
               },
               tooltip: 'Increment',
               child: const Icon(Icons.remove),
